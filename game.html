@@ -319,21 +319,21 @@ const MENU = {
     stages: [["rice"], ["salmon"], ["sauce","gat","yolk","nori","wasabi"]],
     tip: "생연어를 다시마와 정종에 4시간 숙성해요",
     desc: "다시마와 정종에 4시간 숙성한 생연어에 노른자·김·와사비·절인 갓무침",
-    howto: ["와사비만 올린 연어로 먼저 시작해요", "노른자를 비벼 김에 싸서 먹어요", "그다음은 취향대로 조합해 보세요"]
+    howto: ["와사비만 살짝 올려 연어부터 맛보세요", "노른자에 비빈 밥을 김에 싸서 드세요", "갓무침을 곁들여 취향대로 즐기세요"]
   },
   yakitori: {
     name: "삼색 야키토리 정식", short: "야키토리", color: "#b5651d", bowl: "don",
     stages: [["rice"], ["jang"], ["chicken","bokchoy","egg"]],
     tip: "닭다리살은 10년 숙성 시간장으로 졸여요",
     desc: "시간장으로 졸인 닭다리살, 불맛 청경채볶음, 부드러운 스크램블에그",
-    howto: ["처음 몇 젓가락은 세 가지를 따로, 닭다리살부터", "계란으로 타레의 짠맛을 누그러뜨려요", "청양고추 장아찌는 밥과 함께 먹어요"]
+    howto: ["닭다리살부터 한 가지씩 따로 맛보세요", "짭조름한 닭고기는 계란과 함께 드세요", "청양고추 장아찌는 밥에 얹어 드세요"]
   },
   soupcurry: {
     name: "스프카레 정식", short: "스프카레", color: "#d99a1e", bowl: "soup",
     stages: [["soup"], ["veg"], ["karaage"]],
     tip: "튀긴 채소를 스프에 담가서 내는 삿포로식이에요",
     desc: "특제 카레 스프에 튀긴 채소 여섯 가지를 담은 삿포로식 스프카레",
-    howto: ["스프를 먼저 맛봐요", "밥을 한 술씩 스프에 적셔 먹어요", "튀긴 채소도 스프에 적셔서 드세요"]
+    howto: ["먼저 스프만 한 숟가락 맛보세요", "밥은 한 술씩 스프에 적셔 드세요", "튀긴 채소도 스프에 푹 적셔 즐기세요"]
   }
 };
 
@@ -893,11 +893,11 @@ function endGame(){
     '<div class="stats"><span>응대 '+S.served+'명</span><span>숙련 '+S.mastered.size+'개</span><span>놓침 '+S.left+'명</span></div>'+
     '<div class="best">내 최고 '+fmt(best)+'점</div></div>'+
     '<div class="acts">'+primary+'</div>'+(SRC!=="qr" && RE.on ? eventCard(false) : '')+
-    '<div class="howcard"><div class="howhead">연희시오 추천 먹는 법 — 세 메뉴 모두</div>'+
+    '<div class="howcard"><div class="howhead">연희시오가 추천하는 먹는 법</div>'+
     [id].concat(MENU_IDS.filter(x=>x!==id)).map((mid,i)=>{ const mm=MENU[mid];
       const list = '<ol>'+mm.howto.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol>';
-      return i ? '<details class="howto other"><summary class="t">'+esc(mm.resultName||mm.name)+' 먹는 법</summary>'+list+'</details>'
-               : '<div class="howto"><div class="t">'+esc(mm.resultName||mm.name)+' 먹는 법</div>'+list+'</div>'; }).join("")+
+      return i ? '<details class="howto other"><summary class="t">'+esc(mm.resultName||mm.name)+'</summary>'+list+'</details>'
+               : '<div class="howto"><div class="t">'+esc(mm.resultName||mm.name)+'</div>'+list+'</div>'; }).join("")+
     '</div>'+
     '<div class="mcard"><div class="ph">'+(photo?'<img alt="'+esc(rName)+'" loading="lazy" src="'+esc(photo)+'">':fullDishSVG(id))+'</div>'+
     '<div class="body"><div class="k">오늘 가장 많이 만든 메뉴 · '+esc(st.price)+'</div><h2>'+esc(rName)+'</h2><p class="desc" style="margin:0">'+esc(m.desc)+'</p>'+
@@ -959,7 +959,7 @@ async function makeCard(id, rank){
     }
     ctx.fillStyle="#2b2420"; ctx.font="900 54px "+F; ctx.fillText(m.resultName || m.name, W/2, 985);
     ctx.fillStyle="#fff1dc"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(90,1010,900,212,28) : ctx.rect(90,1010,900,212); ctx.fill();
-    ctx.fillStyle="#b44c20"; ctx.font="900 30px "+F; ctx.fillText("연희시오 추천 먹는 법", W/2, 1056);
+    ctx.fillStyle="#b44c20"; ctx.font="900 30px "+F; ctx.fillText("연희시오가 추천하는 먹는 법", W/2, 1056);
     ctx.textAlign="left"; ctx.fillStyle="#5a3a1a"; ctx.font="700 32px "+F;
     m.howto.slice(0,3).forEach((t,i)=>{ ctx.fillText((i+1)+". "+t, 130, 1108+i*46); });
     ctx.textAlign="center";
