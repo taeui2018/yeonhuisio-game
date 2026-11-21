@@ -299,7 +299,10 @@ const CONFIG = {
     booking: "https://m.booking.naver.com/booking/6/bizes/1408513/items/6737166?area=bmp&theme=place",
     review: "https://m.place.naver.com/my/checkin"   // 영수증 리뷰 쓰기(네이버 MY플레이스 영수증 인증)
   },
-  theme: "xmas",                 // "xmas" = 크리스마스·연말 장식 / "basic" = 평상시 디자인 (1월에 "basic"으로 바꾸세요)
+  theme: "auto",                 // "auto" = 아래 일정대로 날짜에 맞춰 자동 전환 / "xmas"·"basic" = 강제 고정
+  themeSchedule: [               // [시작 "월-일", 끝 "월-일", 테마] — 해당 없는 날은 "basic"
+    ["11-15", "12-31", "xmas"]   // 지금(11월 말)부터 연말까지 크리스마스
+  ],
   reviewEvent: {                 // 영수증 리뷰 이벤트 (끄려면 on: false)
     on: true,
     gift: "새우튀김 2pc 또는 음료",
@@ -370,7 +373,14 @@ const ING = {
 "use strict";
 const $ = s => document.querySelector(s);
 const SRC = (()=>{ const ok=["naver","qr","share"]; let v = new URLSearchParams(location.search).get("src"); if(!ok.includes(v)) v = (location.hash||"").replace("#",""); return ok.includes(v) ? v : "naver"; })();
-const XMAS = (CONFIG.theme||"") === "xmas";
+function pickTheme(){
+  const t = CONFIG.theme || "basic"; if(t !== "auto") return t;
+  const d = new Date(), md = String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const hit = (CONFIG.themeSchedule||[]).find(r => md >= r[0] && md <= r[1]);
+  return hit ? hit[2] : "basic";
+}
+const THEME = pickTheme();
+const XMAS = THEME === "xmas";
 if(XMAS){
   document.body.classList.add("xmas");
   const C=["#e2463c","#f2c75c","#5fbf6a","#fff4dc"]; let L='<svg viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 4 Q50 18 100 4 T200 4 T300 4 T400 4" stroke="#0a1f15" stroke-width="1.5" fill="none"/>';
