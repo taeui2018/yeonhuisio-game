@@ -600,6 +600,10 @@ function renderSeat(i){
   c.el = el; c.bar = el.querySelector(".pat i"); c.face = el.querySelector(".face"); c.mood = "ok";
   el.classList.add("enter");
 }
+function pickCustType(){   // 남녀 반반 확률, 같은 성별 안에서는 무작위
+  const fem = CUST.map((c,i)=>c.f?i:-1).filter(i=>i>=0), male = CUST.map((c,i)=>c.f?-1:i).filter(i=>i>=0);
+  const pool = (Math.random()<0.5 ? fem : male); return pool[Math.floor(Math.random()*pool.length)];
+}
 function seatCustomer(c){
   const i = S.seats.indexOf(null); if(i<0 || seated().length >= seatLimit()) return false;
   S.seats[i] = c; c.seat = i; renderSeat(i); maybeTip(c.menu); renderRecipe(); updateServe(); return true;
@@ -611,7 +615,7 @@ function spawn(menuId){
   while(!menu && S.plan.length){ const nx=S.plan.shift(); if(opts.includes(nx)) menu=nx; }
   menu = menu || opts[Math.floor(Math.random()*opts.length)];
   S.forceNext = null;
-  const c = { id:++S.uid, menu, type:Math.floor(Math.random()*CUST.length), pat:1 };
+  const c = { id:++S.uid, menu, type:pickCustType(), pat:1 };
   if(!seatCustomer(c)){ if(S.queue.length < G.maxQueue) S.queue.push(c); }
   updateHUD();
   return c;
