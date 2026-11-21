@@ -114,6 +114,31 @@ button{font-family:inherit;color:inherit;border:0;background:none;padding:0;curs
 @keyframes flash{50%{background:#ffd4cc}}
 @keyframes newi{0%,60%{box-shadow:0 0 0 3px var(--lamp)}}
 
+/* ---------- 크리스마스 테마 (CONFIG.theme = "xmas") ---------- */
+body.xmas{--wall1:#0f2e1f;--wall2:#18492f;--lamp:#f2c75c}
+body.xmas #top{background:#0b2417}
+body.xmas #counter{background:linear-gradient(var(--wall1),var(--wall2))}
+body.xmas #counter .lamp{display:none}
+#lights,#garland,#snow{display:none;position:absolute;left:0;right:0;pointer-events:none}
+body.xmas #lights{display:block;top:0;height:30px;z-index:1}
+body.xmas #garland{display:block;bottom:12px;height:18px;z-index:3}
+body.xmas #snow{display:block;inset:0;overflow:hidden;z-index:0}
+#lights svg,#garland svg{width:100%;height:100%;display:block}
+#snow i{position:absolute;top:-8px;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.55;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(240px) translateX(14px)}}
+body.xmas #lights .b{animation:twinkle 1.6s ease-in-out infinite}
+body.xmas #lights .b:nth-child(3n){animation-delay:.5s}body.xmas #lights .b:nth-child(3n+1){animation-delay:1s}
+@keyframes twinkle{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){#snow i,body.xmas #lights .b{animation:none}}
+body.xmas #seats{z-index:2}
+body.xmas #bar{background:linear-gradient(#b07a42,#8a5a2c 60%,#6e4520)}
+body.xmas .rhead{background:linear-gradient(#0f2e1f,#18492f)}
+.rhead .xm{display:none}
+body.xmas .rhead .xm{display:inline-block;background:#c8323a;color:#fff4dc;font-size:11px;font-weight:900;padding:3px 10px;border-radius:999px;margin-bottom:6px}
+body.xmas #work{background:linear-gradient(#efe3cf,#e6d6bb)}
+body.xmas .tool.on{background:#e7f3e4}
+body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
+
 @media (max-height:580px){
   #counter{min-height:100px}
   #recipe{min-height:60px;padding:3px 8px}
@@ -204,9 +229,12 @@ button{font-family:inherit;color:inherit;border:0;background:none;padding:0;curs
     <div class="lamp" style="left:calc(20% - 9px)"></div>
     <div class="lamp" style="left:calc(50% - 9px)"></div>
     <div class="lamp" style="left:calc(80% - 9px)"></div>
+    <div id="snow" aria-hidden="true"></div>
+    <div id="lights" aria-hidden="true"></div>
     <div id="seats"></div>
     <div id="waitline"></div>
     <div id="bar"></div>
+    <div id="garland" aria-hidden="true"></div>
     <div id="coach"></div>
     <div id="banner">영업 시작!</div>
   </section>
@@ -251,6 +279,7 @@ const CONFIG = {
     route: "https://naver.me/G8hLNmCs",   // 네이버 플레이스(길찾기·리뷰) — 연희시오.com 과 같은 링크
     booking: "https://m.booking.naver.com/booking/6/bizes/1408513/items/6737166?area=bmp&theme=place"
   },
+  theme: "xmas",                 // "xmas" = 크리스마스·연말 장식 / "basic" = 평상시 디자인 (1월에 "basic"으로 바꾸세요)
   showOffPeakTip: true,          // "점심 피크를 피하려면 오후 1시 이후 추천" 표시 여부
   analyticsId: "",               // GA4 측정 ID(G-XXXX). 비워 두면 측정 안 함
   game: { seconds: 60, spawnStart: 10, spawnEnd: 7, patience: 45, masteryCount: 3,
@@ -316,6 +345,18 @@ const ING = {
 "use strict";
 const $ = s => document.querySelector(s);
 const SRC = (()=>{ const ok=["naver","qr","share"]; let v = new URLSearchParams(location.search).get("src"); if(!ok.includes(v)) v = (location.hash||"").replace("#",""); return ok.includes(v) ? v : "naver"; })();
+const XMAS = (CONFIG.theme||"") === "xmas";
+if(XMAS){
+  document.body.classList.add("xmas");
+  const C=["#e2463c","#f2c75c","#5fbf6a","#fff4dc"]; let L='<svg viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 4 Q50 18 100 4 T200 4 T300 4 T400 4" stroke="#0a1f15" stroke-width="1.5" fill="none"/>';
+  for(let i=0;i<16;i++){ const x=12+i*25, y=4+Math.abs(Math.sin((x/100)*Math.PI))*10; L+='<ellipse class="b" cx="'+x+'" cy="'+(y+7)+'" rx="3.4" ry="5" fill="'+C[i%4]+'"/>'; }
+  document.getElementById("lights").innerHTML = L+'</svg>';
+  let G='<svg viewBox="0 0 400 18" preserveAspectRatio="none">';
+  for(let i=0;i<=40;i++){ const x=i*10; G+='<ellipse cx="'+x+'" cy="9" rx="8" ry="6" fill="'+["#1f6b3a","#2a7d45","#17582f"][i%3]+'"/>'; if(i%3===0) G+='<circle cx="'+(x+3)+'" cy="7" r="2.4" fill="#d63a33"/>'; }
+  document.getElementById("garland").innerHTML = G+'</svg>';
+  let N=""; for(let i=0;i<22;i++){ const l=Math.round(Math.random()*100), d=(5+Math.random()*6).toFixed(1), dl=(-Math.random()*10).toFixed(1), sz=(3+Math.random()*3).toFixed(1); N+='<i style="left:'+l+'%;width:'+sz+'px;height:'+sz+'px;animation-duration:'+d+'s;animation-delay:'+dl+'s"></i>'; }
+  document.getElementById("snow").innerHTML = N;
+}
 const store = {
   get(k){ try { return localStorage.getItem("yhs_"+k); } catch(e){ return null; } },
   set(k,v){ try { localStorage.setItem("yhs_"+k, v); } catch(e){} }
@@ -465,7 +506,8 @@ function custSVG(t){
   if(c.tie) s += '<path d="M27 46 h6 l-1 4 l2 12 l-4 4 l-4 -4 l2 -12z" fill="#c0392b"/><path d="M24 45 l6 5 l6 -5" stroke="#f2f2f2" stroke-width="3" fill="none"/>';
   s += '<circle cx="30" cy="28" r="14" fill="'+c.skin+'"/>';
   s += '<path d="M16 27 Q17 11 30 12 Q44 11 44 27 Q40 18 30 19 Q21 18 16 27Z" fill="'+c.hair+'"/>';
-  if(c.bun) s += '<circle cx="30" cy="10" r="6" fill="'+c.hair+'"/>';
+  if(XMAS) s += '<path d="M15 21 Q20 4 36 6 Q48 8 52 18 L46 20 Q42 14 36 15 L45 21Z" fill="#d63a33"/><rect x="14" y="18" width="32" height="6" rx="3" fill="#fff"/><circle cx="51" cy="19" r="4" fill="#fff"/>';
+  else if(c.bun) s += '<circle cx="30" cy="10" r="6" fill="'+c.hair+'"/>';
   if(c.glasses) s += '<circle cx="25" cy="28" r="4" stroke="#2b2018" stroke-width="1.3" fill="none"/><circle cx="35" cy="28" r="4" stroke="#2b2018" stroke-width="1.3" fill="none"/><path d="M29 28 h2" stroke="#2b2018" stroke-width="1.3"/>';
   s += '<circle cx="22" cy="33" r="2.4" fill="#f4a3a3" opacity=".5"/><circle cx="38" cy="33" r="2.4" fill="#f4a3a3" opacity=".5"/>';
   s += '<g class="face">'+face("ok")+'</g></svg>';
@@ -813,7 +855,7 @@ function endGame(){
            '<button class="act sec" id="again">다시 하기</button>';
   }
   $("#resultWrap").innerHTML =
-    '<div class="rhead"><div class="store">'+esc(st.name)+' · 오늘의 셰프</div><div class="rank">'+esc(rank)+'</div>'+
+    '<div class="rhead"><span class="xm">Merry Christmas &amp; Happy New Year</span><div class="store">'+esc(st.name)+' · 오늘의 셰프</div><div class="rank">'+esc(rank)+'</div>'+
     '<div class="sc">'+fmt(S.score)+'<span style="font-size:18px">점</span></div>'+
     '<div class="stats"><span>응대 '+S.served+'명</span><span>숙련 '+S.mastered.size+'개</span><span>놓침 '+S.left+'명</span></div>'+
     '<div class="best">내 최고 '+fmt(best)+'점</div></div>'+
@@ -860,11 +902,12 @@ async function makeCard(id, rank){
   const m = MENU[id], W=1080, H=1350, F=getComputedStyle(document.body).fontFamily;
   const cv=document.createElement("canvas"); cv.width=W; cv.height=H; const ctx=cv.getContext("2d");
   const draw = async (withExternal)=>{
-    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,"#2a1c13"); g.addColorStop(.4,"#4a3324"); g.addColorStop(.4,"#f7efe1"); g.addColorStop(1,"#efe3cf");
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,XMAS?"#0f2e1f":"#2a1c13"); g.addColorStop(.4,XMAS?"#18492f":"#4a3324"); g.addColorStop(.4,"#f7efe1"); g.addColorStop(1,"#efe3cf");
     ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    for(const x of [270,540,810]){ const rg=ctx.createRadialGradient(x,0,10,x,0,260); rg.addColorStop(0,"rgba(246,201,106,.5)"); rg.addColorStop(1,"rgba(246,201,106,0)"); ctx.fillStyle=rg; ctx.fillRect(x-260,0,520,260); }
-    ctx.textAlign="center"; ctx.fillStyle="#f6e6c8"; ctx.font="700 40px "+F; ctx.fillText(CONFIG.store.name+" · 오늘의 셰프 도전", W/2, 110);
-    ctx.fillStyle="#f6c96a"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(W/2-190,150,380,84,42) : ctx.rect(W/2-190,150,380,84); ctx.fill();
+    if(XMAS){ const C=["#e2463c","#f2c75c","#5fbf6a","#fff4dc"]; ctx.strokeStyle="#0a1f15"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(0,8); for(let x=0;x<=W;x+=270) ctx.quadraticCurveTo(x+135,36,x+270,8); ctx.stroke(); for(let i=0;i<14;i++){ const x=40+i*77, t=((x%270)/270), y=8+4*t*(1-t)*14; ctx.fillStyle=C[i%4]; ctx.beginPath(); ctx.ellipse(x,y+12,8,11,0,0,7); ctx.fill(); } ctx.fillStyle="rgba(255,255,255,.35)"; for(let i=0;i<60;i++){ const x=(i*263)%W; if(x>190 && x<890) continue; ctx.beginPath(); ctx.arc(x,70+(i*131)%450,2+(i%3),0,7); ctx.fill(); } }
+    else for(const x of [270,540,810]){ const rg=ctx.createRadialGradient(x,0,10,x,0,260); rg.addColorStop(0,"rgba(246,201,106,.5)"); rg.addColorStop(1,"rgba(246,201,106,0)"); ctx.fillStyle=rg; ctx.fillRect(x-260,0,520,260); }
+    ctx.textAlign="center"; ctx.fillStyle="#f6e6c8"; ctx.font="700 40px "+F; ctx.fillText(XMAS ? "Merry Christmas · "+CONFIG.store.name : CONFIG.store.name+" · 오늘의 셰프 도전", W/2, 116);
+    ctx.fillStyle=XMAS?"#f2c75c":"#f6c96a"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(W/2-190,150,380,84,42) : ctx.rect(W/2-190,150,380,84); ctx.fill();
     ctx.fillStyle="#3a2200"; ctx.font="900 46px "+F; ctx.fillText(rank, W/2, 208);
     ctx.fillStyle="#fff4dc"; ctx.font="900 150px "+F; ctx.fillText(fmt(S.score), W/2, 390);
     ctx.font="700 36px "+F; ctx.fillStyle="#e9d7b8"; ctx.fillText("응대 "+S.served+"명 · 숙련 "+S.mastered.size+"개", W/2, 482);
