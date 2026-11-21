@@ -38,7 +38,8 @@ button{font-family:inherit;color:inherit;border:0;background:none;padding:0;curs
 #clock{font-variant-numeric:tabular-nums;font-size:15px}
 #score{font-variant-numeric:tabular-nums;margin-left:auto}
 #seatsPill.full{background:#8e2f1e}
-#sound{flex:0 0 44px;width:44px;height:44px;margin-right:-8px;font-size:18px;display:flex;align-items:center;justify-content:center}
+.snd{flex:0 0 40px;width:40px;height:44px;font-size:18px;display:flex;align-items:center;justify-content:center}
+#bgmBtn{margin-right:-6px}
 
 /* ---------- 카운터 ---------- */
 #counter{flex:1 1 auto;min-height:126px;max-height:40vh;position:relative;
@@ -237,7 +238,8 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
     <div class="pill" id="seatsPill">좌석 <span id="seatN">0</span>/15</div>
     <button id="skipTut">건너뛰기 ›</button>
     <div class="pill" id="score">0점</div>
-    <button id="sound" aria-label="소리 켜기">🔇</button>
+    <button id="sfxBtn" class="snd" aria-label="효과음 끄기">🔊</button>
+    <button id="bgmBtn" class="snd" aria-label="캐럴 끄기">🎵</button>
   </header>
 
   <section id="counter">
@@ -303,6 +305,7 @@ const CONFIG = {
     gift: "새우튀김 2pc 또는 음료",
     keywords: ["야탑", "야탑맛집"]
   },
+  sound: { sfx: true, bgm: true },   // 기본값: 효과음·캐럴 BGM 켜짐 (손님이 화면 위 🔊·🎵로 끄고 켤 수 있음)
   showOffPeakTip: true,          // "점심 피크를 피하려면 오후 1시 이후 추천" 표시 여부
   analyticsId: "",               // GA4 측정 ID(G-XXXX). 비워 두면 측정 안 함
   game: { seconds: 60, spawnStart: 10, spawnEnd: 7, patience: 45, masteryCount: 3,
@@ -401,33 +404,74 @@ const track = (()=>{
   return (name, params)=>{ try{ window.gtag && gtag("event", name, Object.assign({src:SRC}, params||{})); }catch(e){} };
 })();
 
-/* ---------- 사운드 (Web Audio, 기본 음소거) ---------- */
-let actx = null, muted = true;
-function tone(f, d, type, v, when){
-  if(muted || !actx) return;
+/* ---------- 사운드 (Web Audio — 효과음 + 캐럴 BGM, 음원 파일 없음) ---------- */
+// BGM: 전통 캐럴 "Jingle Bells"(1857, 저작권 만료) 후렴 멜로디를 직접 연주
+const SND = CONFIG.sound || { sfx:true, bgm:true };
+let actx = null, master = null, bgmBus = null, noiseBuf = null;
+let sfxOn = store.get("sfx")!==null ? store.get("sfx")==="1" : !!SND.sfx;
+let bgmOn = store.get("bgm")!==null ? store.get("bgm")==="1" : !!SND.bgm;
+function ensureAudio(){
+  if(actx){ if(actx.state==="suspended" && !document.hidden) actx.resume(); return true; }
   try{
-    const t = actx.currentTime + (when||0);
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    master = actx.createGain(); master.gain.value = .9; master.connect(actx.destination);
+    bgmBus = actx.createGain(); bgmBus.gain.value = .55; bgmBus.connect(master);
+    noiseBuf = actx.createBuffer(1, actx.sampleRate*.08, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*(1-i/d.length);
+  }catch(e){ actx=null; return false; }
+  return true;
+}
+function tone(f, d, type, v, when, bus, at){
+  if(!actx) return;
+  try{
+    const t = (at!=null ? at : actx.currentTime) + (when||0);
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = type||"sine"; o.frequency.setValueAtTime(f, t);
-    g.gain.setValueAtTime(v||.12, t); g.gain.exponentialRampToValueAtTime(.0001, t+d);
-    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+d+.02);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v||.1, t+.008); g.gain.exponentialRampToValueAtTime(.0001, t+d);
+    o.connect(g).connect(bus||master); o.start(t); o.stop(t+d+.03);
   }catch(e){}
 }
+function fx(fn){ if(!sfxOn || !ensureAudio()) return; fn(); }
 const sfx = {
-  tap(){ tone(660,.07,"triangle",.08); },
-  bad(){ tone(180,.18,"square",.06); },
-  serve(){ tone(784,.1,"triangle",.1); tone(1046,.16,"triangle",.1,.09); },
-  leave(){ tone(300,.2,"sawtooth",.05); tone(220,.25,"sawtooth",.05,.15); },
-  open(){ tone(523,.1,"sine",.1); tone(659,.1,"sine",.1,.1); tone(784,.18,"sine",.1,.2); }
+  tap(){  fx(()=>{ tone(880,.06,"triangle",.09); tone(1320,.05,"sine",.05,.025); }); },              // 재료 담기
+  tray(){ fx(()=>{ tone(520,.07,"triangle",.08); tone(780,.06,"sine",.04,.03); }); },               // 쟁반
+  done(){ fx(()=>{ [1047,1319,1568,2093].forEach((f,i)=>tone(f,.22,"sine",.08,i*.07)); }); },      // 그릇 완성
+  bad(){  fx(()=>{ tone(170,.16,"square",.045); tone(140,.16,"square",.035,.08); }); },
+  serve(){ fx(()=>{ tone(1568,.25,"sine",.1); tone(2093,.35,"sine",.09,.09); tone(3136,.3,"sine",.03,.09); }); },
+  leave(){ fx(()=>{ tone(300,.2,"sawtooth",.04); tone(220,.25,"sawtooth",.04,.15); }); },
+  open(){ fx(()=>{ tone(784,.12,"sine",.09); tone(988,.12,"sine",.09,.1); tone(1175,.12,"sine",.09,.2); tone(1568,.3,"sine",.09,.3); }); }
 };
-$("#sound").addEventListener("click", ()=>{
-  muted = !muted;
-  if(!muted && !actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
-  if(actx && actx.state==="suspended") actx.resume();
-  $("#sound").textContent = muted ? "🔇" : "🔊";
-  $("#sound").setAttribute("aria-label", muted ? "소리 켜기" : "소리 끄기");
-  if(!muted) sfx.tap();
-});
+// --- 캐럴 BGM ---
+const Q = .34;   // 4분음표 길이(초)
+const E4=76,F4=77,G4=79,C4=72,D4=74;   // 한 옥타브 위에서 종소리처럼
+const A1=[[E4,1],[E4,1],[E4,2],[E4,1],[E4,1],[E4,2],[E4,1],[G4,1],[C4,1.5],[D4,.5],[E4,4],[F4,1],[F4,1],[F4,1.5],[F4,.5],[F4,1],[E4,1],[E4,1],[E4,.5],[E4,.5]];
+const SONG=A1.concat([[E4,1],[D4,1],[D4,1],[E4,1],[D4,2],[G4,2]], A1, [[G4,1],[G4,1],[F4,1],[D4,1],[C4,4]]);
+const BARS=[48,48,48,48,41,48,50,43, 48,48,48,48,41,48,43,48];   // 마디별 베이스 근음
+let bgmTimer=null, nextNote=0, noteIdx=0, nextBeat=0, beatIdx=0;
+const mf = m => 440*Math.pow(2,(m-69)/12);
+function bell(m,t,len){ tone(mf(m),Math.min(len,.9)+.25,"sine",.055,0,bgmBus,t); tone(mf(m)*2.005,.35,"sine",.015,0,bgmBus,t); }
+function shaker(t,v){ try{ const s=actx.createBufferSource(); s.buffer=noiseBuf; const f=actx.createBiquadFilter(); f.type="highpass"; f.frequency.value=6500; const g=actx.createGain(); g.gain.value=v; s.connect(f).connect(g).connect(bgmBus); s.start(t); }catch(e){} }
+function bgmTick(){
+  if(!actx) return;
+  while(nextNote < actx.currentTime+.5){ const [m,b]=SONG[noteIdx]; bell(m,nextNote,b*Q); nextNote+=b*Q; noteIdx=(noteIdx+1)%SONG.length; }
+  while(nextBeat < actx.currentTime+.5){ const bar=Math.floor(beatIdx/4)%16, bt=beatIdx%4;
+    if(bt%2===0) tone(mf(BARS[bar]),Q*1.6,"triangle",.05,0,bgmBus,nextBeat);
+    shaker(nextBeat+Q/2, .05); if(bt%2===1) shaker(nextBeat, .035);
+    nextBeat+=Q; beatIdx=(beatIdx+1)%64; }
+}
+function bgmStart(){ if(!bgmOn || bgmTimer || !ensureAudio()) return; nextNote=nextBeat=actx.currentTime+.15; noteIdx=0; beatIdx=0; bgmTimer=setInterval(bgmTick,120); bgmTick(); }
+function bgmStop(){ if(bgmTimer){ clearInterval(bgmTimer); bgmTimer=null; } }
+function soundUI(){
+  const a=$("#sfxBtn"), b=$("#bgmBtn");
+  a.textContent = sfxOn ? "🔊" : "🔇"; a.setAttribute("aria-label", sfxOn ? "효과음 끄기" : "효과음 켜기");
+  b.style.opacity = bgmOn ? "1" : ".35"; b.setAttribute("aria-label", bgmOn ? "캐럴 끄기" : "캐럴 켜기");
+}
+$("#sfxBtn").addEventListener("click", ()=>{ sfxOn=!sfxOn; store.set("sfx", sfxOn?"1":"0"); soundUI(); if(sfxOn){ ensureAudio(); sfx.tap(); } });
+$("#bgmBtn").addEventListener("click", ()=>{ bgmOn=!bgmOn; store.set("bgm", bgmOn?"1":"0"); soundUI(); if(bgmOn) bgmStart(); else bgmStop(); });
+// 브라우저는 첫 터치 전에는 소리를 막으므로, 첫 터치 때 오디오를 깨움
+document.addEventListener("pointerdown", ()=>{ if(sfxOn||bgmOn){ ensureAudio(); if(bgmOn) bgmStart(); } }, {passive:true});
+document.addEventListener("visibilitychange", ()=>{ if(!actx) return; if(document.hidden) actx.suspend(); else actx.resume(); });
+soundUI();
 
 /* ---------- 그림 ---------- */
 function icon(id){
@@ -724,7 +768,7 @@ function tapIng(x, btn){
   const pool = S.bowl.length ? S.cands : S.unlocked;
   const ok = pool.filter(id=>canAdd(id, S.bowl, x));
   if(ok.length){
-    S.bowl.push(x); S.cands = ok; sfx.tap();
+    S.bowl.push(x); S.cands = ok; if(completeMenu()) sfx.done(); else sfx.tap();
   } else {
     sfx.bad(); S.score = Math.max(0, S.score + SC.wrong); S.streak = 0;
     const bw=$("#bowl"); bw.classList.remove("shake"); void bw.offsetWidth; bw.classList.add("shake");
@@ -735,7 +779,7 @@ function tapIng(x, btn){
 }
 $("#tray").addEventListener("click", ()=>{
   if(!canAct()) return;
-  S.tray = !S.tray; sfx.tap(); renderBowl(); tutStep();
+  S.tray = !S.tray; sfx.tray(); renderBowl(); tutStep();
 });
 $("#trash").addEventListener("click", ()=>{
   if(!canAct() || (!S.bowl.length && !S.tray)) return;
