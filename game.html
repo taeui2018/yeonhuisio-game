@@ -177,7 +177,7 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
 #modal img.card{width:100%;border-radius:10px;display:block;margin-top:6px;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
 #modal input{width:100%;font-size:14px;padding:10px;border:1px solid var(--line);border-radius:10px;user-select:text;-webkit-user-select:text}
 
-#toast{position:fixed;left:50%;top:56px;transform:translateX(-50%);background:rgba(30,20,12,.92);color:#fff4dc;font-weight:800;font-size:13px;padding:8px 14px;border-radius:999px;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#toast{position:fixed;left:50%;top:56px;transform:translateX(-50%);background:rgba(30,20,12,.92);color:#fff4dc;font-weight:800;font-size:13px;line-height:1.4;padding:8px 14px;border-radius:16px;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;width:max-content;max-width:92vw;text-align:center;word-break:keep-all}
 #toast.show{opacity:1}
 
 /* ---------- 결과 ---------- */
@@ -790,9 +790,8 @@ function checkUnlock(){
 
 function maybeTip(id){
   if(S.phase!=="play" || store.get("tip_"+id)) return;
-  store.set("tip_"+id,"1"); pause("tip");
-  modal('<div style="font-size:12px;font-weight:800;color:var(--accent2)">첫 주문</div><h3>'+esc(MENU[id].name)+'</h3><p>'+esc(MENU[id].tip)+'</p><button class="big" id="tipOk">확인하고 계속</button>');
-  $("#tipOk").onclick = ()=>{ closeModal(); resume(); renderRecipe(); };
+  store.set("tip_"+id,"1");
+  toast(MENU[id].short+" · "+MENU[id].tip, 3200);   // 게임을 멈추지 않는 안내
 }
 
 /* ---------- 진행 ---------- */
@@ -866,8 +865,9 @@ function eventCard(inStore){
     '<p class="eg">네이버 영수증 리뷰를 남겨 주시면<br><b>'+esc(RE.gift)+'</b>를 드려요</p>'+
     '<p class="eh">'+(inStore ? '작성한 리뷰 화면을 직원에게 보여 주세요' : '매장에서 식사 후 영수증으로 참여할 수 있어요')+'</p>'+
     (kw ? '<p class="ek">리뷰 내용에 '+kw+' 키워드를 넣어 주시면 큰 힘이 됩니다</p><p class="en">키워드는 선택이며, 넣지 않아도 이벤트에 참여할 수 있어요</p>' : '')+
+    '<p class="en">혜택을 받은 리뷰에는 ‘이벤트 참여’라고 함께 적어 주세요</p>'+
     '<div class="row2"><a class="act green" href="'+esc(L.route)+'" target="_blank" rel="noopener" data-ev="click_review">영수증 리뷰 쓰기</a>'+
-    '<a class="act sec" href="'+esc(L.booking)+'" target="_blank" rel="noopener" data-ev="click_booking">네이버 예약</a></div></div>';
+    '<a class="act sec" href="'+esc(L.booking)+'" target="_blank" rel="noopener" data-ev="click_booking">'+(inStore?'다음 방문 예약':'네이버 예약')+'</a></div></div>';
 }
 function endGame(){
   S.phase="end"; updateServe(); pointAt(null);
