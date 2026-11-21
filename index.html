@@ -637,10 +637,15 @@ function updateHUD(){
 
 /* ---------- 재료 ---------- */
 function pantryIds(){ const out=[]; for(const id of S.unlocked) for(const x of allIngs(id)) if(!out.includes(x)) out.push(x); return out; }
+function shuffled(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pantryOrder(){   // 판마다 재료 버튼 순서를 무작위로 섞음 (한 판 안에서는 고정)
+  if(!S.order) S.order = shuffled(Object.keys(ING));
+  return pantryIds().sort((x,y)=>S.order.indexOf(x)-S.order.indexOf(y));
+}
 function ingColor(x){ const owners = S.unlocked.filter(id=>allIngs(id).includes(x)); return owners.length===1 ? MENU[owners[0]].color : "#bfb29c"; }
 function buildPantry(newOnes){
   const p = $("#pantry"); p.innerHTML="";
-  for(const x of pantryIds()){
+  for(const x of pantryOrder()){
     const b=document.createElement("button"); b.className="ing"+(newOnes&&newOnes.includes(x)?" new":""); b.dataset.ing=x;
     b.style.setProperty("--c", ingColor(x));
     b.innerHTML = icon(x)+'<span>'+esc(ING[x].name)+'</span>';
@@ -775,7 +780,7 @@ function checkUnlock(){
     if(at <= S.t && !S.unlocked.includes(id)){
       const before = pantryIds();
       S.unlocked.push(id);
-      buildPantry(pantryIds().filter(x=>!before.includes(x)));
+      buildPantry(S.t>0 ? pantryIds().filter(x=>!before.includes(x)) : null);   // 시작 시엔 강조 없음
       if(S.phase==="play" && S.t>0){
         S.forceNext = id; sfx.open();
         if(!store.get("tip_"+id)){
