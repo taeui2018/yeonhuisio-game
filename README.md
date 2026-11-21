@@ -1,6 +1,6 @@
 # 연희시오 야탑점 — 오늘의 셰프 도전
 
-매장에서 기다리는 손님이 QR로 바로 플레이하는 90초 웹게임입니다.
+매장에서 기다리는 손님이 QR로 바로 플레이하는 1분 웹게임입니다.
 
 - 게임 주소: https://taeui2018.github.io/yeonhuisio-game/
 - 매장 QR: https://taeui2018.github.io/yeonhuisio-game/?src=qr
