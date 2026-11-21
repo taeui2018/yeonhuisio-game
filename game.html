@@ -589,7 +589,7 @@ function renderSeat(i){
 }
 function seatCustomer(c){
   const i = S.seats.indexOf(null); if(i<0 || seated().length >= seatLimit()) return false;
-  S.seats[i] = c; c.seat = i; renderSeat(i); maybeTip(c.menu); return true;
+  S.seats[i] = c; c.seat = i; renderSeat(i); maybeTip(c.menu); renderRecipe(); updateServe(); return true;
 }
 function spawn(menuId){
   const opts = S.unlocked;
