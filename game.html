@@ -207,7 +207,8 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
 .howto.other .t::after{content:"펼치기 ▾";font-size:11px;color:var(--sub)}
 .howto.other[open] .t::after{content:"접기 ▴"}
 .howto.other[open] ol{margin-top:6px}
-.mcard .howhead{font-size:12px;font-weight:900;color:var(--sub);margin:2px 0 6px}
+.howcard{background:var(--paper);border-radius:16px;margin-top:12px;padding:12px 14px 14px;box-shadow:0 2px 0 var(--line)}
+.howcard .howhead{font-size:13px;font-weight:900;color:#7a3b12;margin:0 0 8px}
 .howto ol{margin:0;padding-left:20px;font-size:13px;line-height:1.55}
 .acts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .act{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;font-weight:900;font-size:16px;text-decoration:none;background:var(--accent);color:#fff;box-shadow:0 3px 0 var(--accent2);text-align:center;padding:0 12px}
@@ -892,13 +893,14 @@ function endGame(){
     '<div class="stats"><span>응대 '+S.served+'명</span><span>숙련 '+S.mastered.size+'개</span><span>놓침 '+S.left+'명</span></div>'+
     '<div class="best">내 최고 '+fmt(best)+'점</div></div>'+
     '<div class="acts">'+primary+'</div>'+(SRC!=="qr" && RE.on ? eventCard(false) : '')+
-    '<div class="mcard"><div class="ph">'+(photo?'<img alt="'+esc(rName)+'" loading="lazy" src="'+esc(photo)+'">':fullDishSVG(id))+'</div>'+
-    '<div class="body"><div class="k">오늘 가장 많이 만든 메뉴 · '+esc(st.price)+'</div><h2>'+esc(rName)+'</h2><p class="desc">'+esc(m.desc)+'</p>'+
-    '<div class="howhead">연희시오 추천 먹는 법 — 세 메뉴 모두</div>'+
+    '<div class="howcard"><div class="howhead">연희시오 추천 먹는 법 — 세 메뉴 모두</div>'+
     [id].concat(MENU_IDS.filter(x=>x!==id)).map((mid,i)=>{ const mm=MENU[mid];
       const list = '<ol>'+mm.howto.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol>';
       return i ? '<details class="howto other"><summary class="t">'+esc(mm.resultName||mm.name)+' 먹는 법</summary>'+list+'</details>'
                : '<div class="howto"><div class="t">'+esc(mm.resultName||mm.name)+' 먹는 법</div>'+list+'</div>'; }).join("")+
+    '</div>'+
+    '<div class="mcard"><div class="ph">'+(photo?'<img alt="'+esc(rName)+'" loading="lazy" src="'+esc(photo)+'">':fullDishSVG(id))+'</div>'+
+    '<div class="body"><div class="k">오늘 가장 많이 만든 메뉴 · '+esc(st.price)+'</div><h2>'+esc(rName)+'</h2><p class="desc" style="margin:0">'+esc(m.desc)+'</p>'+
     '</div></div>'+
     '<div class="acts">'+acts+'<button class="act sec" id="mkcard">결과 카드 만들기</button></div>'+
     (SRC!=="qr" && CONFIG.showOffPeakTip ? '<div class="offpeak">점심 피크를 피하려면 오후 1시 이후 추천</div>' : '')+
