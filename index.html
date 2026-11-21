@@ -294,7 +294,8 @@ const CONFIG = {
   gameUrl: "https://taeui2018.github.io/yeonhuisio-game/",   // 게임 공식 주소(공유·도전장 링크). 홈페이지에 올리면 그 주소로 교체
   links: {
     route: "https://naver.me/G8hLNmCs",   // 네이버 플레이스(길찾기·리뷰) — 연희시오.com 과 같은 링크
-    booking: "https://m.booking.naver.com/booking/6/bizes/1408513/items/6737166?area=bmp&theme=place"
+    booking: "https://m.booking.naver.com/booking/6/bizes/1408513/items/6737166?area=bmp&theme=place",
+    review: "https://m.place.naver.com/my/checkin"   // 영수증 리뷰 쓰기(네이버 MY플레이스 영수증 인증)
   },
   theme: "xmas",                 // "xmas" = 크리스마스·연말 장식 / "basic" = 평상시 디자인 (1월에 "basic"으로 바꾸세요)
   reviewEvent: {                 // 영수증 리뷰 이벤트 (끄려면 on: false)
@@ -866,7 +867,7 @@ function eventCard(inStore){
     '<p class="eh">'+(inStore ? '작성한 리뷰 화면을 직원에게 보여 주세요' : '매장에서 식사 후 영수증으로 참여할 수 있어요')+'</p>'+
     (kw ? '<p class="ek">리뷰 내용에 '+kw+' 키워드를 넣어 주시면 큰 힘이 됩니다</p>' : '')+
     '<p class="en">혜택을 받은 리뷰에는 ‘이벤트 참여’라고 함께 적어 주세요</p>'+
-    '<div class="row2"><a class="act green" href="'+esc(L.route)+'" target="_blank" rel="noopener" data-ev="click_review">영수증 리뷰 쓰기</a>'+
+    '<div class="row2"><a class="act green" href="'+esc(L.review||L.route)+'" target="_blank" rel="noopener" data-ev="click_review">영수증 리뷰 쓰기</a>'+
     '<a class="act sec" href="'+esc(L.booking)+'" target="_blank" rel="noopener" data-ev="click_booking">'+(inStore?'다음 방문 예약':'네이버 예약')+'</a></div></div>';
 }
 function endGame(){
