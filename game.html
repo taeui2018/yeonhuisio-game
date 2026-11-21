@@ -212,6 +212,14 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
 .acts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .act{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;font-weight:900;font-size:16px;text-decoration:none;background:var(--accent);color:#fff;box-shadow:0 3px 0 var(--accent2);text-align:center;padding:0 12px}
 .act.sec{background:var(--paper);color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.event{word-break:keep-all;margin-top:12px;background:#fff6e6;border:2px dashed #c8323a;border-radius:16px;padding:12px 14px 14px;text-align:center}
+.event .et{display:inline-block;background:#c8323a;color:#fff4dc;font-size:12px;font-weight:900;padding:4px 12px;border-radius:999px}
+.event .eg{font-size:17px;font-weight:900;margin:8px 0 4px;line-height:1.35;color:#2b2420}
+.event .eg b{color:#c8323a}
+.event .eh{font-size:13px;color:#5a4a3c;line-height:1.5;margin:0}
+.event .ek{font-size:13px;font-weight:800;color:#7a4a1a;margin:6px 0 0;line-height:1.45}
+.event .en{font-size:11px;color:var(--sub);margin:2px 0 0}
+.event .row2{margin-top:10px}
 .act.note{flex-direction:column;background:#fff1dc;color:#7a3b12;box-shadow:0 3px 0 #ecd3ad;cursor:default;padding:8px 12px}
 .act.note small{font-size:13px;font-weight:700;margin-top:2px;color:#8a5a2c}
 .act.green{background:#03c75a;box-shadow:0 3px 0 #02a04a}
@@ -288,6 +296,11 @@ const CONFIG = {
     booking: "https://m.booking.naver.com/booking/6/bizes/1408513/items/6737166?area=bmp&theme=place"
   },
   theme: "xmas",                 // "xmas" = 크리스마스·연말 장식 / "basic" = 평상시 디자인 (1월에 "basic"으로 바꾸세요)
+  reviewEvent: {                 // 영수증 리뷰 이벤트 (끄려면 on: false)
+    on: true,
+    gift: "새우튀김 2pc 또는 음료",
+    keywords: ["야탑", "야탑맛집"]
+  },
   showOffPeakTip: true,          // "점심 피크를 피하려면 오후 1시 이후 추천" 표시 여부
   analyticsId: "",               // GA4 측정 ID(G-XXXX). 비워 두면 측정 안 함
   game: { seconds: 60, spawnStart: 10, spawnEnd: 7, patience: 45, masteryCount: 3,
@@ -845,6 +858,16 @@ function loop(now){
 function rankOf(sc){ let r=CONFIG.ranks[0][1]; for(const [th,name] of CONFIG.ranks) if(sc>=th) r=name; return r; }
 function topMenu(){ let best=null, n=0; for(const id of MENU_IDS){ const v=S.servedBy[id]||0; if(v>n){ n=v; best=id; } } return best||MENU_IDS[0]; }
 function fullDishSVG(id){ return '<svg viewBox="0 0 220 140" aria-hidden="true">'+bowlSVG(allIngs(id), MENU[id].bowl==="soup"?"soup":"don", true)+'</svg>'; }
+const RE = CONFIG.reviewEvent || {on:false};
+function eventCard(inStore){
+  const L = CONFIG.links, kw = (RE.keywords||[]).map(k=>"‘"+esc(k)+"’").join(", ");
+  return '<div class="event"><span class="et">영수증 리뷰 이벤트</span>'+
+    '<p class="eg">네이버 영수증 리뷰를 남겨 주시면<br><b>'+esc(RE.gift)+'</b>를 드려요</p>'+
+    '<p class="eh">'+(inStore ? '작성한 리뷰 화면을 직원에게 보여 주세요' : '매장에서 식사 후 영수증으로 참여할 수 있어요')+'</p>'+
+    (kw ? '<p class="ek">리뷰 내용에 '+kw+' 키워드를 넣어 주시면 큰 힘이 됩니다</p><p class="en">키워드는 선택이며, 넣지 않아도 이벤트에 참여할 수 있어요</p>' : '')+
+    '<div class="row2"><a class="act green" href="'+esc(L.route)+'" target="_blank" rel="noopener" data-ev="click_review">영수증 리뷰 쓰기</a>'+
+    '<a class="act sec" href="'+esc(L.booking)+'" target="_blank" rel="noopener" data-ev="click_booking">네이버 예약</a></div></div>';
+}
 function endGame(){
   S.phase="end"; updateServe(); pointAt(null);
   const best = Math.max(S.score, +(store.get("best")||0)); store.set("best", best);
@@ -854,7 +877,7 @@ function endGame(){
   const photo = IMAGES.menu && IMAGES.menu[id];
   let primary, acts;
   if(SRC==="qr"){
-    primary = '<a class="act green" href="'+esc(L.route)+'" target="_blank" rel="noopener" data-ev="click_route">맛있게 드셨다면 네이버 리뷰 남기기</a>';
+    primary = RE.on ? eventCard(true) : '<a class="act green" href="'+esc(L.route)+'" target="_blank" rel="noopener" data-ev="click_route">맛있게 드셨다면 네이버 리뷰 남기기</a>';
     acts = '<div class="row2"><button class="act sec" id="share">친구에게 도전장</button>'+
            '<button class="act sec" id="again">다시 하기</button></div>';
   } else {
@@ -868,7 +891,7 @@ function endGame(){
     '<div class="sc">'+fmt(S.score)+'<span style="font-size:18px">점</span></div>'+
     '<div class="stats"><span>응대 '+S.served+'명</span><span>숙련 '+S.mastered.size+'개</span><span>놓침 '+S.left+'명</span></div>'+
     '<div class="best">내 최고 '+fmt(best)+'점</div></div>'+
-    '<div class="acts">'+primary+'</div>'+
+    '<div class="acts">'+primary+'</div>'+(SRC!=="qr" && RE.on ? eventCard(false) : '')+
     '<div class="mcard"><div class="ph">'+(photo?'<img alt="'+esc(rName)+'" loading="lazy" src="'+esc(photo)+'">':fullDishSVG(id))+'</div>'+
     '<div class="body"><div class="k">오늘 가장 많이 만든 메뉴 · '+esc(st.price)+'</div><h2>'+esc(rName)+'</h2><p class="desc">'+esc(m.desc)+'</p>'+
     '<div class="howhead">연희시오 추천 먹는 법 — 세 메뉴 모두</div>'+
