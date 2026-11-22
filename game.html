@@ -182,6 +182,47 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
 #toast.show{opacity:1}
 
 /* ---------- 결과 ---------- */
+/* ---------- 게임 종료: 선물 상자 열기 ---------- */
+#gift{position:fixed;inset:0;z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  background:radial-gradient(circle at 50% 46%,rgba(70,45,25,.9),rgba(12,9,6,.97));cursor:pointer;
+  --box:#d8612f;--box2:#e5743f;--rib:#fff3dc;--glow:255,226,160}
+body.xmas #gift{--box:#c8352d;--box2:#da443a;--rib:#f2c75c;background:radial-gradient(circle at 50% 46%,rgba(24,73,47,.92),rgba(6,20,13,.97))}
+#gift.on{display:flex}
+#gift.out{animation:gOut .45s ease forwards}
+@keyframes gOut{to{opacity:0}}
+.gstage{position:relative;width:190px;height:210px;animation:gDrop .6s cubic-bezier(.3,1.4,.5,1) both}
+#gift.wig .gstage{animation:gWig .55s ease-in-out infinite}
+#gift.open .gstage{animation:gPop .35s ease-out both}
+@keyframes gDrop{0%{transform:translateY(-70vh) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes gWig{0%,100%{transform:rotate(0)}20%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}60%{transform:rotate(-4deg)}80%{transform:rotate(3deg)}}
+@keyframes gPop{0%{transform:scale(1)}40%{transform:scale(1.12,.9)}100%{transform:scale(1)}}
+.gglow{position:absolute;left:50%;top:44%;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;opacity:0;transform:scale(.2);pointer-events:none;
+  background:repeating-conic-gradient(rgba(var(--glow),.42) 0 9deg,transparent 9deg 24deg);-webkit-mask:radial-gradient(circle,#000 18%,transparent 68%);mask:radial-gradient(circle,#000 18%,transparent 68%)}
+#gift.open .gglow{animation:gRay 2.4s ease-out forwards}
+@keyframes gRay{0%{opacity:0;transform:scale(.2) rotate(0)}25%{opacity:1}100%{opacity:.85;transform:scale(1) rotate(60deg)}}
+.gbody{position:absolute;left:20px;bottom:0;width:150px;height:118px;border-radius:12px;
+  background:linear-gradient(90deg,transparent 42%,var(--rib) 42% 58%,transparent 58%),var(--box);box-shadow:inset 0 -16px 0 rgba(0,0,0,.14),0 14px 24px rgba(0,0,0,.35)}
+.gbody::before{content:"";position:absolute;left:8px;right:8px;top:-10px;height:22px;border-radius:50%;background:#2a160c;box-shadow:inset 0 6px 10px rgba(0,0,0,.6);opacity:0;transition:opacity .15s .1s}
+#gift.open .gbody::before{opacity:1}
+.glid{position:absolute;left:8px;bottom:108px;width:174px;height:40px;border-radius:10px;z-index:3;transform-origin:15% 100%;
+  background:linear-gradient(90deg,transparent 43%,var(--rib) 43% 57%,transparent 57%),var(--box2);box-shadow:0 6px 0 rgba(0,0,0,.12)}
+.glid svg{position:absolute;left:50%;top:-40px;width:96px;margin-left:-48px}
+#gift.open .glid{animation:gLid .7s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes gLid{0%{transform:none}100%{transform:translate(-46px,-190px) rotate(-38deg);opacity:0}}
+.gprize{position:absolute;left:50%;bottom:40px;z-index:2;transform:translate(-50%,0) scale(.3);opacity:0;text-align:center;white-space:nowrap}
+#gift.open .gprize{animation:gPrize .8s .12s cubic-bezier(.3,1.5,.5,1) forwards}
+@keyframes gPrize{to{transform:translate(-50%,-150px) scale(1);opacity:1}}
+.gprize .r{display:inline-block;padding:6px 16px;border-radius:999px;background:#f2c75c;color:#3a2410;font-weight:800;font-size:17px}
+.gprize .n{display:block;margin-top:6px;color:#fff;font-weight:900;font-size:46px;line-height:1;text-shadow:0 3px 14px rgba(0,0,0,.45)}
+.gprize .n small{font-size:20px}
+.gtxt{position:relative;color:#fff4dc;text-align:center;font-weight:800;font-size:19px;line-height:1.5;min-height:56px}
+.gtxt small{display:block;font-weight:600;font-size:14px;opacity:.75}
+#gift.open .gtxt{opacity:0;transition:opacity .2s}
+.gconf{position:absolute;left:50%;top:46%;width:0;height:0;pointer-events:none}
+.gconf i{position:absolute;left:0;top:0;width:9px;height:14px;border-radius:2px;opacity:0;animation:gConf 1.3s cubic-bezier(.15,.7,.4,1) forwards}
+@keyframes gConf{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
+@media (prefers-reduced-motion:reduce){.gstage,#gift.wig .gstage,#gift.open .gstage,.gconf i{animation:none!important}
+  #gift.open .glid{animation:none;opacity:0}#gift.open .gprize{animation:none;opacity:1;transform:translate(-50%,-150px)}#gift.open .gglow{animation:none;opacity:.6;transform:none}}
 #result{position:fixed;inset:0;z-index:30;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--cream);display:none}
 #result.show{display:block}
 #result .wrap{max-width:480px;margin:0 auto;padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
@@ -275,6 +316,15 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
 <div id="guide"></div>
 <div id="toast"></div>
 <div id="modal"><div class="box" id="modalBox"></div></div>
+<div id="gift" role="dialog" aria-label="오늘의 결과 선물">
+  <div class="gglow"></div><div class="gconf"></div>
+  <div class="gstage">
+    <div class="gprize"><span class="r"></span><span class="n"></span></div>
+    <div class="gbody"></div>
+    <div class="glid"><svg viewBox="0 0 96 44" aria-hidden="true"><path d="M48 40 C30 44 6 38 8 20 C10 6 30 8 48 36Z M48 40 C66 44 90 38 88 20 C86 6 66 8 48 36Z" fill="var(--rib)"/><path d="M48 36 C36 20 22 16 18 22 M48 36 C60 20 74 16 78 22" stroke="rgba(0,0,0,.18)" stroke-width="3" fill="none"/><circle cx="48" cy="38" r="8" fill="var(--rib)" stroke="rgba(0,0,0,.15)" stroke-width="2"/></svg></div>
+  </div>
+  <div class="gtxt">오늘의 영업 결과가 도착했어요!<small>눌러서 열어 보세요</small></div>
+</div>
 <section id="result"><div class="wrap" id="resultWrap"></div></section>
 
 <script>
@@ -449,6 +499,8 @@ const sfx = {
   bad(){  fx(()=>{ tone(170,.16,"square",.045); tone(140,.16,"square",.035,.08); }); },
   serve(){ fx(()=>{ tone(1568,.25,"sine",.1); tone(2093,.35,"sine",.09,.09); tone(3136,.3,"sine",.03,.09); }); },
   leave(){ fx(()=>{ tone(300,.2,"sawtooth",.04); tone(220,.25,"sawtooth",.04,.15); }); },
+  gift(){ fx(()=>{ [784,988,1175,1568,1976,2349].forEach((f,i)=>tone(f,.35,"sine",.075,i*.06)); tone(3136,.5,"sine",.03,.38); try{ const n=actx.createBufferSource(); n.buffer=noiseBuf; const g=actx.createGain(); g.gain.value=.12; n.connect(g).connect(master); n.start(); }catch(e){} }); },   // 선물 열림
+  drop(){ fx(()=>{ tone(330,.12,"triangle",.09); tone(220,.16,"sine",.07,.05); }); },
   open(){ fx(()=>{ tone(784,.12,"sine",.09); tone(988,.12,"sine",.09,.1); tone(1175,.12,"sine",.09,.2); tone(1568,.3,"sine",.09,.3); }); }
 };
 // --- 캐럴 BGM ---
@@ -885,7 +937,7 @@ function startPlay(){
   banner("영업 시작!"); sfx.open(); updateServe();
 }
 function newGame(){
-  closeModal(); $("#result").classList.remove("show"); $("#result").scrollTop=0;
+  giftClear(); closeModal(); $("#result").classList.remove("show"); $("#result").scrollTop=0;
   S = fresh(); buildSeats(); checkUnlock(); renderBowl(); renderRecipe(); updateHUD();
   track("game_start");
   if(store.get("tut")!=="1"){
@@ -987,7 +1039,30 @@ function endGame(){
   if($("#share")) $("#share").onclick = shareIt;
   $("#mkcard").onclick = ()=>makeCard(id, rank);
   setTimeout(()=>{ banner("영업 종료!"); }, 0);
-  setTimeout(()=>{ $("#result").classList.add("show"); $("#result").scrollTop=0; }, 900);
+  setTimeout(()=>{ if(S.phase==="end") giftReveal(rank, S.score); }, 900);
+}
+/* 선물 상자를 열면 결과 화면이 나타남 (화면을 누르면 바로 열림) */
+let giftT = [];
+function giftClear(){ giftT.forEach(clearTimeout); giftT=[]; const g=$("#gift"); g.className=""; g.onclick=null; }
+function giftReveal(rank, score){
+  giftClear();
+  const g=$("#gift"); g.querySelector(".r").textContent=rank; g.querySelector(".n").innerHTML=fmt(score)+'<small>점</small>';
+  g.querySelector(".gconf").innerHTML=""; g.className="on"; sfx.drop();
+  giftT.push(setTimeout(()=>{ if(g.classList.contains("on") && !g.classList.contains("open")) g.classList.add("wig"); }, 650));
+  let opened=false;
+  const open=()=>{
+    if(opened) return; opened=true; giftT.forEach(clearTimeout); giftT=[];
+    g.classList.remove("wig"); g.classList.add("open"); sfx.gift();
+    const C = XMAS ? ["#e2463c","#f2c75c","#5fbf6a","#fff4dc","#ffffff"] : ["#d8612f","#f2c75c","#3f9b56","#fff4dc","#e0a526"];
+    const box=g.querySelector(".gconf"); let h="";
+    for(let i=0;i<64;i++){ const a=Math.random()*Math.PI*2, d=120+Math.random()*200;
+      h+='<i style="background:'+C[i%C.length]+';--dx:'+Math.round(Math.cos(a)*d)+'px;--dy:'+Math.round(Math.sin(a)*d-60)+'px;--r:'+Math.round(Math.random()*720-360)+'deg;animation-delay:'+(Math.random()*.12).toFixed(2)+'s"></i>'; }
+    box.innerHTML=h;
+    giftT.push(setTimeout(()=>{ $("#result").classList.add("show"); $("#result").scrollTop=0; g.classList.add("out"); }, 1700));
+    giftT.push(setTimeout(giftClear, 2200));
+  };
+  g.onclick=open;
+  giftT.push(setTimeout(open, 1900));   // 누르지 않아도 잠시 후 자동으로 열림
 }
 function shareUrl(){ const base = (CONFIG.gameUrl||"").trim(); return base ? base + "#share" : location.origin + location.pathname + "?src=share"; }
 async function shareIt(){
