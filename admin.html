@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>연희시오 셰프 랭킹 · 관리</title>
+<style>
+:root{--ink:#2b2420;--sub:#7a6a5c;--line:#e3d5bf;--paper:#fffaf1;--cream:#f7efe1;--accent:#d8612f;--ok:#2f8a4a;--bad:#c63d2d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px 40px}
+h1{font-size:19px;margin:4px 0 12px}
+.card{background:var(--paper);border-radius:14px;padding:14px;box-shadow:0 2px 0 var(--line);margin-bottom:12px}
+input,select{font:inherit;font-size:17px;height:48px;border:2px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;width:100%}
+button{font:inherit;font-weight:800;font-size:16px;height:48px;border:0;border-radius:12px;background:var(--accent);color:#fff;padding:0 16px;cursor:pointer}
+button.sec{background:#efe4d2;color:var(--ink)}
+button.ok{background:var(--ok)}
+button.sm{height:34px;font-size:13px;padding:0 10px}
+.row{display:flex;gap:8px}
+.row>*:first-child{flex:1}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;background:#efe4d2;color:var(--ink)}
+.tabs button.on{background:var(--ink);color:#fff}
+.msg{margin-top:8px;font-size:14px;font-weight:700;min-height:18px}
+.err{color:var(--bad)}
+.res{margin-top:12px;border-radius:12px;padding:12px;font-size:15px;line-height:1.6}
+.res.good{background:#e5f4e8}.res.warn{background:#fff1d6}.res.no{background:#fde4e0}
+.res b.big{font-size:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--sub);font-weight:700}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.flag{color:var(--bad);font-weight:800}
+.tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;background:#e5f4e8;color:var(--ok)}
+.hint{font-size:12px;color:var(--sub);line-height:1.6;margin-top:8px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏆 연희시오 셰프 랭킹 · 관리</h1>
+
+  <div class="card" id="login">
+    <div class="row"><input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="관리자 PIN"><button id="go">들어가기</button></div>
+    <div class="msg" id="lmsg"></div>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="tabs"><button id="tCheck" class="on">수령 코드 확인</button><button id="tList">월별 순위</button></div>
+
+    <div class="card" id="pCheck">
+      <div class="row"><input id="code" placeholder="수령 코드 (예: YS-4K7P)" autocapitalize="characters" autocomplete="off"><button id="chk">확인</button></div>
+      <div id="cres"></div>
+      <div class="hint">상품을 드리기 전에 <b>해당 월 연희시오 야탑점 영수증</b>도 꼭 확인해 주세요.<br>1등 정식 1인 식사권 · 2등 사이드 메뉴 1개 · 3등 음료 1잔 · 한 분당 한 달에 1개</div>
+    </div>
+
+    <div class="card hide" id="pList">
+      <div class="row"><select id="month"></select><button class="sec" id="reload">새로고침</button></div>
+      <div class="msg" id="lsum"></div>
+      <div id="ltable"></div>
+      <div class="hint">⚠ 표시는 손님에게 음식을 내는 간격이 2초보다 짧았던 기록이에요(사람 손으로는 어려움). 이상하면 [숨기기]를 누르면 순위에서 빠져요.</div>
+      <div id="lhidden"></div>
+    </div>
+  </div>
+</div>
+<script>
+/* Supabase 연결 정보 — 게임(index.html)의 CONFIG.ranking 과 같은 값 */
+const RK_URL = "https://xiglmzafkbrmjsgiisda.supabase.co";
+const RK_KEY = "sb_publishable_RCf41QXAwHbKK9Cre2vLZQ_4r0kwUnn";
+const CLAIM_DAYS = 30;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => (+n || 0).toLocaleString("ko-KR");
+const when = t => t ? new Date(t).toLocaleString("ko-KR", {timeZone:"Asia/Seoul", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit"}) : "";
+const mlabel = m => m ? m.slice(0,4) + "년 " + (+m.slice(5,7)) + "월" : "";
+function kstMonth(offset){ const d = new Date(Date.now() + 9*3600e3); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + (offset||0)); return d.toISOString().slice(0,7); }
+let PIN = "";
+try{ PIN = sessionStorage.getItem("yhs_admin_pin") || ""; }catch(e){}
+
+async function call(fn, body){
+  const r = await fetch(RK_URL.replace(/\/+$/,"") + "/rest/v1/rpc/" + fn, { method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey":RK_KEY, "Authorization":"Bearer " + RK_KEY }, body: JSON.stringify(body) });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok){ if(j && /locked/.test(j.message||"")) throw new Error("PIN을 여러 번 틀려 10분간 잠겼어요"); throw new Error("서버 연결 오류 (" + r.status + ")"); }
+  return j;
+}
+
+async function login(pin){
+  $("#lmsg").className = "msg"; $("#lmsg").textContent = "확인 중…";
+  try{
+    const r = await call("yhs_admin_list", { p_pin: pin, p_month: kstMonth(0) });
+    if(!r || !r.ok){ $("#lmsg").className = "msg err"; $("#lmsg").textContent = "PIN이 맞지 않아요"; try{ sessionStorage.removeItem("yhs_admin_pin"); }catch(e){} return; }
+    PIN = pin; try{ sessionStorage.setItem("yhs_admin_pin", pin); }catch(e){}
+    $("#login").classList.add("hide"); $("#main").classList.remove("hide");
+    renderList(r);
+  }catch(e){ $("#lmsg").className = "msg err"; $("#lmsg").textContent = e.message; }
+}
+$("#go").onclick = () => login($("#pin").value.trim());
+$("#pin").addEventListener("keydown", e => { if(e.key === "Enter") login($("#pin").value.trim()); });
+
+function tab(which){
+  $("#tCheck").classList.toggle("on", which === "check"); $("#tList").classList.toggle("on", which === "list");
+  $("#pCheck").classList.toggle("hide", which !== "check"); $("#pList").classList.toggle("hide", which !== "list");
+}
+$("#tCheck").onclick = () => tab("check");
+$("#tList").onclick = () => { tab("list"); loadList(); };
+
+/* ---------- 수령 코드 확인 ---------- */
+const PRIZE = ["정식 1인 식사권", "사이드 메뉴 1개", "음료 1잔"];
+async function check(){
+  const code = $("#code").value.trim(); const box = $("#cres");
+  if(!code){ box.innerHTML = ""; return; }
+  box.innerHTML = '<div class="msg">확인 중…</div>';
+  try{
+    const r = await call("yhs_admin_check", { p_pin: PIN, p_code: code });
+    if(!r.ok) return relogin();
+    if(!r.found){ box.innerHTML = '<div class="res no">❌ <b>없는 코드예요.</b><br>글자를 다시 확인해 주세요. (0·O·1·I는 코드에 쓰이지 않아요)</div>'; return; }
+    const cur = kstMonth(0), done = r.month < cur;
+    const end = new Date(r.month + "-01T00:00:00+09:00"); end.setMonth(end.getMonth() + 1);
+    const deadline = new Date(end.getTime() + CLAIM_DAYS * 864e5), expired = Date.now() > deadline.getTime();
+    const win = done && r.rank && r.rank <= 3 && !r.hidden;
+    let cls = "no", head;
+    if(r.hidden) head = "🚫 순위에서 제외된 기록이에요";
+    else if(!done) { cls = "warn"; head = "⏳ " + mlabel(r.month) + "은 아직 집계 중이에요 (현재 " + r.rank + "등) — 다음 달 1일에 확정돼요"; }
+    else if(!win) head = "❌ 상품 대상이 아니에요 (" + mlabel(r.month) + " " + r.rank + "등)";
+    else if(r.claimed) { cls = "warn"; head = "⚠ 이미 " + when(r.claimed) + "에 상품을 받았어요"; }
+    else if(expired) { cls = "warn"; head = "⚠ 수령 기간(" + deadline.toLocaleDateString("ko-KR") + "까지)이 지났어요"; }
+    else { cls = "good"; head = "✅ " + mlabel(r.month) + " " + r.rank + "등 — <b class=\"big\">" + PRIZE[r.rank - 1] + "</b>"; }
+    box.innerHTML = '<div class="res ' + cls + '">' + head + '<br>닉네임 <b>' + esc(r.nick) + '</b> · ' + fmt(r.score) + '점 · ' + when(r.at) +
+      (r.isBest ? '' : '<br><small>이 코드는 같은 폰의 다른 판 기록이에요 (같은 손님으로 확인됨)</small>') +
+      (win && !r.claimed ? '<br><br>영수증(' + mlabel(r.month) + ')을 확인한 뒤 눌러 주세요<br><button class="ok" id="claim">상품 드림 — 수령 완료 처리</button>' : '') +
+      (r.claimed ? '<br><button class="sec sm" id="unclaim">수령 처리 취소</button>' : '') + '</div>';
+    if($("#claim")) $("#claim").onclick = async () => { await call("yhs_admin_set", { p_pin: PIN, p_id: r.id, p_action: "claim" }); check(); };
+    if($("#unclaim")) $("#unclaim").onclick = async () => { if(confirm("수령 처리를 취소할까요?")){ await call("yhs_admin_set", { p_pin: PIN, p_id: r.id, p_action: "unclaim" }); check(); } };
+  }catch(e){ box.innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; }
+}
+$("#chk").onclick = check;
+$("#code").addEventListener("keydown", e => { if(e.key === "Enter") check(); });
+
+/* ---------- 월별 순위 ---------- */
+for(let i = 0; i > -6; i--){ const m = kstMonth(i); const o = document.createElement("option"); o.value = m; o.textContent = mlabel(m) + (i === 0 ? " (집계 중)" : ""); $("#month").appendChild(o); }
+$("#month").onchange = loadList; $("#reload").onclick = loadList;
+async function loadList(){
+  $("#lsum").textContent = "불러오는 중…";
+  try{ const r = await call("yhs_admin_list", { p_pin: PIN, p_month: $("#month").value }); if(!r.ok) return relogin(); renderList(r); }
+  catch(e){ $("#lsum").className = "msg err"; $("#lsum").textContent = e.message; }
+}
+function minGap(log){ let g = Infinity; for(let i = 1; i < (log||[]).length; i++) g = Math.min(g, log[i] - log[i-1]); return g; }
+function renderList(r){
+  $("#month").value = r.month;
+  $("#lsum").className = "msg"; $("#lsum").textContent = mlabel(r.month) + " · 참여 " + fmt(r.plays) + "판 · 순위 " + (r.board.length >= 20 ? "상위 20명" : r.board.length + "명");
+  const medal = ["🥇","🥈","🥉"];
+  $("#ltable").innerHTML = r.board.length ? '<table><tr><th>순위</th><th>닉네임</th><th class="n">점수</th><th class="n">응대</th><th>시각</th><th></th></tr>' + r.board.map(b => {
+    const g = minGap(b.log), sus = g < 2;
+    return '<tr><td>' + (medal[b.rank-1] || b.rank) + '</td><td>' + esc(b.nick) + (b.claimed ? ' <span class="tag">수령</span>' : '') + '<br><small style="color:var(--sub)">' + b.plays + '판' +
+      (isFinite(g) ? ' · 최소 간격 ' + g.toFixed(1) + '초' : '') + '</small>' + (sus ? ' <span class="flag">⚠</span>' : '') + '</td><td class="n">' + fmt(b.score) + '</td><td class="n">' + b.served +
+      '</td><td><small>' + when(b.at) + '</small></td><td><button class="sec sm" data-hide="' + b.id + '">숨기기</button></td></tr>';
+  }).join("") + '</table>' : '<div class="msg">아직 기록이 없어요</div>';
+  $("#lhidden").innerHTML = r.hidden && r.hidden.length ? '<div class="hint"><b>숨긴 기록</b></div><table>' + r.hidden.map(h =>
+    '<tr><td>' + esc(h.nick) + '</td><td class="n">' + fmt(h.score) + '</td><td><small>' + when(h.at) + '</small></td><td><button class="sec sm" data-unhide="' + h.id + '">되살리기</button></td></tr>').join("") + '</table>' : '';
+  document.querySelectorAll("[data-hide]").forEach(b => b.onclick = async () => { if(confirm("이 손님의 이번 달 기록을 순위에서 뺄까요?")){ await call("yhs_admin_set", { p_pin: PIN, p_id: +b.dataset.hide, p_action: "hide" }); loadList(); } });
+  document.querySelectorAll("[data-unhide]").forEach(b => b.onclick = async () => { await call("yhs_admin_set", { p_pin: PIN, p_id: +b.dataset.unhide, p_action: "unhide" }); loadList(); });
+}
+function relogin(){ try{ sessionStorage.removeItem("yhs_admin_pin"); }catch(e){} location.reload(); }
+
+if(!RK_URL || !RK_KEY){ $("#lmsg").className = "msg err"; $("#lmsg").textContent = "아직 랭킹 서버가 연결되지 않았어요"; }
+else if(PIN) login(PIN);
+</script>
+</body>
+</html>

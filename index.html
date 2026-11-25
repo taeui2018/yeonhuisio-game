@@ -182,6 +182,39 @@ body.xmas #serve:not(:disabled){background:#c8323a;box-shadow:0 3px 0 #9c2228}
 #toast.show{opacity:1}
 
 /* ---------- 결과 ---------- */
+/* ---------- 월간 랭킹 ---------- */
+.rkcard{background:var(--paper);border-radius:16px;margin-top:12px;padding:12px 14px 14px;box-shadow:0 2px 0 var(--line);border:2px solid #f2c75c}
+.rkhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rkhead b{font-size:16px;font-weight:900}
+.rkhead>span{font-size:11px;color:var(--sub);font-weight:700}
+.rkprz{display:flex;gap:6px;margin-top:8px}
+.rkprz div{flex:1;background:#fff3d6;border-radius:10px;padding:6px 4px;text-align:center;font-size:11px;font-weight:800;line-height:1.3}
+.rkprz div i{display:block;font-style:normal;font-size:18px}
+.rkform{display:flex;gap:6px;margin-top:10px}
+.rkform input{flex:1;min-width:0;height:46px;border-radius:12px;border:2px solid var(--line);background:#fff;padding:0 12px;font:inherit;font-size:16px;font-weight:700;-webkit-user-select:text;user-select:text}
+.rkform button{flex:0 0 auto;height:46px;padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;font-weight:900;font-size:15px;box-shadow:0 3px 0 var(--accent2)}
+.rkform button:disabled{opacity:.5}
+.rkmsg{font-size:12px;color:var(--sub);margin-top:6px;min-height:16px;font-weight:700}
+.rkmsg.err{color:var(--bad)}
+.rklist{list-style:none;margin:10px 0 0;padding:0}
+.rklist li{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:10px;font-weight:800;font-size:14px}
+.rklist li:nth-child(odd){background:#f8f0e2}
+.rklist li.me{background:#ffe7b8;outline:2px solid #f2c75c}
+.rklist .no{flex:0 0 26px;text-align:center;font-size:15px}
+.rklist .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rklist .pt{font-variant-numeric:tabular-nums}
+.rklist .empty{justify-content:center;color:var(--sub);font-weight:700;background:none!important}
+.rkme{margin-top:8px;text-align:center;font-size:14px;font-weight:900}
+.rkme small{font-weight:700;color:var(--sub)}
+.rkcode{margin-top:8px;background:#2b2420;color:#fff4dc;border-radius:12px;padding:10px;text-align:center}
+.rkcode .c{font-size:24px;font-weight:900;letter-spacing:3px;font-variant-numeric:tabular-nums;-webkit-user-select:text;user-select:text}
+.rkcode .h{font-size:11px;opacity:.8;margin-top:2px;line-height:1.45}
+.rkprev{margin-top:8px;font-size:12px;color:var(--sub);text-align:center;font-weight:700;line-height:1.5}
+.rkrule{margin-top:8px;font-size:12px;color:var(--sub)}
+.rkrule summary{font-weight:800;cursor:pointer;list-style:none;text-align:center}
+.rkrule summary::-webkit-details-marker{display:none}
+.rkrule ul{margin:6px 0 0;padding-left:18px;line-height:1.55}
+.rkrename{background:none;color:var(--sub);font-size:12px;font-weight:700;text-decoration:underline;margin-left:4px}
 #result{position:fixed;inset:0;z-index:30;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--cream);display:none}
 #result.show{display:block}
 #result .wrap{max-width:480px;margin:0 auto;padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
@@ -307,6 +340,13 @@ const CONFIG = {
     on: true,
     gift: "새우튀김 2pc 또는 음료",
     keywords: ["야탑", "야탑맛집"]
+  },
+  ranking: {                     // 월간 셰프 랭킹 (url·key가 비어 있으면 랭킹 칸이 숨겨짐)
+    on: true,
+    url: "https://xiglmzafkbrmjsgiisda.supabase.co",           // Supabase 프로젝트 주소
+    key: "sb_publishable_RCf41QXAwHbKK9Cre2vLZQ_4r0kwUnn",     // Supabase 공개 키(publishable) — 공개돼도 되는 키
+    prizes: ["정식 1인 식사권", "사이드 메뉴 1개", "음료 1잔"],   // 1·2·3등 상품
+    claimDays: 30                // 발표 후 수령 기간(일)
   },
   sound: { sfx: true, bgm: true },   // 기본값: 효과음·캐럴 BGM 켜짐 (손님이 화면 위 🔊·🎵로 끄고 켤 수 있음)
   showOffPeakTip: true,          // "점심 피크를 피하려면 오후 1시 이후 추천" 표시 여부
@@ -612,7 +652,7 @@ function fresh(){
   return { phase:"idle", prev:null, t:0, score:0, served:0, left:0, streak:0,
     servedBy:{}, mastered:new Set(), seats:[null,null,null,null,null], queue:[],
     nextSpawn:0, bowl:[], cands:[], tray:false, unlocked:[], forceNext:null, plan:(G.firstOrders||[]).slice(),
-    tut:false, tutCust:null, uid:0 };
+    tut:false, tutCust:null, uid:0, log:[] };
 }
 const allIngs = id => MENU[id].stages.flat();
 function stageIdx(id, bowl){ const st = MENU[id].stages; for(let i=0;i<st.length;i++){ if(!st[i].every(x=>bowl.includes(x))) return i; } return st.length; }
@@ -803,6 +843,7 @@ $("#serve").addEventListener("click", ()=>{
   let pts = SC.serve + Math.round(SC.patienceBonus * Math.max(0,c.pat)) + (mastered ? SC.mastery : 0);
   S.streak++; if(S.streak % 3 === 0){ pts += SC.combo; toast("콤보! +"+SC.combo); }
   S.score += pts; S.served++; S.servedBy[id] = (S.servedBy[id]||0)+1;
+  S.log.push(Math.round(S.t*10)/10);
   sfx.serve(); popAt(c, "+"+pts); if(c.face) c.face.innerHTML = face("joy");
   freeSeat(c);
   if(S.servedBy[id] === G.masteryCount && !mastered){ S.mastered.add(id); setTimeout(()=>toast("★ "+MENU[id].short+" 숙련! 이제 레시피가 숨겨져요", 2200), 300); }
@@ -944,6 +985,125 @@ function eventCard(inStore){
     '<div class="row2"><a class="act green" href="'+esc(L.review||L.route)+'" target="_blank" rel="noopener" data-ev="click_review">영수증 리뷰 쓰기</a>'+
     '<a class="act sec" href="'+esc(L.booking)+'" target="_blank" rel="noopener" data-ev="click_booking">'+(inStore?'다음 방문 예약':'네이버 예약')+'</a></div></div>';
 }
+/* ---------- 월간 셰프 랭킹 (Supabase) ---------- */
+const RK = CONFIG.ranking || {};
+const RK_ON = !!(RK.on && RK.url && RK.key);
+function rkDevice(){
+  let d = store.get("dev");
+  if(!d || !/^[a-zA-Z0-9-]{16,64}$/.test(d)){
+    try{ d = crypto.randomUUID(); }catch(e){ d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2,12) + Math.random().toString(36).slice(2,12); }
+    store.set("dev", d);
+  }
+  return d;
+}
+async function rkCall(fn, body){
+  const ctl = ("AbortController" in window) ? new AbortController() : null;
+  const tm = setTimeout(()=>{ if(ctl) ctl.abort(); }, 8000);
+  try{
+    const r = await fetch(RK.url.replace(/\/+$/,"") + "/rest/v1/rpc/" + fn, { method:"POST", signal: ctl ? ctl.signal : undefined,
+      headers:{ "Content-Type":"application/json", "apikey":RK.key, "Authorization":"Bearer "+RK.key }, body: JSON.stringify(body||{}) });
+    if(!r.ok) throw new Error("http " + r.status);
+    return await r.json();
+  } finally { clearTimeout(tm); }
+}
+const rkMonthLabel = m => m ? (+m.slice(5,7)) + "월" : "이번 달";
+function rkCodes(){ try{ return JSON.parse(store.get("codes")||"{}") || {}; }catch(e){ return {}; } }
+function rkSaveCode(month, code, score){ const c = rkCodes(); if(!c[month] || score > c[month].score) c[month] = {code, score}; store.set("codes", JSON.stringify(c)); }
+const RK_ERR = { nick:"닉네임은 한글·영문·숫자 2~8자로 적어 주세요", nick_bad:"사용할 수 없는 닉네임이에요", rate:"잠시 후 다시 시도해 주세요",
+  score:"기록을 등록할 수 없어요", log:"기록을 등록할 수 없어요", zero:"손님을 한 명 이상 응대해야 등록돼요", device:"기록을 등록할 수 없어요" };
+function rankCardHTML(){
+  if(!RK_ON) return "";
+  const pz = RK.prizes || [];
+  return '<div class="rkcard" id="rk"><div class="rkhead"><b>🏆 <span id="rkM">이번 달</span> 셰프 랭킹</b><span>매월 1~3등 상품</span></div>'+
+    '<div class="rkprz">'+["🥇","🥈","🥉"].map((e,i)=>'<div><i>'+e+'</i>'+esc(pz[i]||"")+'</div>').join("")+'</div>'+
+    '<div id="rkBody"><div class="rkmsg">순위를 불러오는 중…</div></div>'+
+    '<details class="rkrule"><summary>이벤트 안내 ▾</summary><ul>'+
+      '<li>매월 1일~말일(한국 시간) 기록으로 순위를 매겨요. 한 폰의 가장 높은 기록 1개로 집계하고, 동점이면 먼저 세운 기록이 위예요.</li>'+
+      '<li>1~3등은 다음 달 1일부터 이 화면에 발표돼요.</li>'+
+      '<li>상품은 <b>수령 코드</b>와 <b>해당 월 연희시오 야탑점 영수증</b>을 직원에게 보여 주시면 드려요. 발표 후 '+(+RK.claimDays||30)+'일 안에 받아 주세요.</li>'+
+      '<li>한 분당 한 달에 상품 1개, 현금으로 바꿀 수 없어요. 비정상적인 기록은 순위에서 빠질 수 있어요.</li>'+
+      '<li>닉네임과 점수만 저장해요. 이름·전화번호는 받지 않아요.</li>'+
+    '</ul></details></div>';
+}
+function rkRender(d, res, err){
+  const body = $("#rkBody"); if(!body) return;
+  if($("#rkM")) $("#rkM").textContent = rkMonthLabel(d.month);
+  const medal = ["🥇","🥈","🥉"];
+  let h = '';
+  const nick = store.get("nick");
+  if(!res){
+    if(S.served > 0 && S.score > 0){
+      h += '<div class="rkform"><input id="rkNick" maxlength="8" placeholder="닉네임 (2~8자)" autocomplete="nickname" enterkeyhint="done" value="'+esc(nick||"")+'"><button id="rkGo">'+fmt(S.score)+'점 등록</button></div>';
+    } else h += '<div class="rkmsg">손님을 한 명 이상 응대하면 랭킹에 등록할 수 있어요</div>';
+    h += '<div class="rkmsg'+(err?' err':'')+'" id="rkMsg">'+esc(err||"")+'</div>';
+  }
+  h += '<ol class="rklist">' + (d.top && d.top.length ? d.top.map(r=>'<li class="'+(r.me?'me':'')+'"><span class="no">'+(medal[r.rank-1]||r.rank)+'</span><span class="nm">'+esc(r.nick)+(r.me?' (나)':'')+'</span><span class="pt">'+fmt(r.score)+'점</span></li>').join("")
+       : '<li class="empty">아직 기록이 없어요. 첫 1등에 도전하세요!</li>') + '</ol>';
+  if(d.me && d.me.rank){
+    h += '<div class="rkme">내 순위 '+fmt(d.me.rank)+'등 <small>/ '+fmt(d.total||0)+'명 · 이번 달 최고 '+fmt(d.me.score)+'점</small>'+(res && nick ? '<button class="rkrename" id="rkRename">닉네임 바꾸기</button>':'')+'</div>';
+  }
+  const mine = rkCodes()[d.month];
+  if(mine){
+    h += '<div class="rkcode"><div class="c">'+esc(mine.code)+'</div><div class="h">내 이번 달 최고 기록('+fmt(mine.score)+'점)의 수령 코드예요<br>3등 안에 들면 이 코드로 상품을 받아요 — <b>화면을 캡처해 두세요</b></div></div>';
+  }
+  if(d.winners && d.winners.length){
+    const lm = rkCodes()[d.lastMonth];
+    h += '<div class="rkprev">'+rkMonthLabel(d.lastMonth)+' 수상자 · '+d.winners.map(w=>medal[w.rank-1]+' '+esc(w.nick)+' '+fmt(w.score)+'점').join(" · ")+
+         (lm ? '<br>내 '+rkMonthLabel(d.lastMonth)+' 수령 코드: <b>'+esc(lm.code)+'</b>' : '')+'</div>';
+  }
+  body.innerHTML = h;
+  const go = $("#rkGo");
+  if(go){
+    const inp = $("#rkNick");
+    const submit = async ()=>{
+      const n = inp.value.trim();
+      if(!/^[가-힣a-zA-Z0-9]{2,8}$/.test(n)){ $("#rkMsg").className="rkmsg err"; $("#rkMsg").textContent = RK_ERR.nick; inp.focus(); return; }
+      go.disabled = true; $("#rkMsg").className="rkmsg"; $("#rkMsg").textContent = "등록하는 중…";
+      try{
+        const r = await rkCall("yhs_submit", { p_nick:n, p_score:S.score, p_served:S.served, p_left:S.left, p_log:S.log, p_device:rkDevice() });
+        if(!r || !r.ok){ go.disabled=false; $("#rkMsg").className="rkmsg err"; $("#rkMsg").textContent = RK_ERR[r && r.error] || "등록하지 못했어요"; return; }
+        store.set("nick", n); S.rkDone = true;
+        if(r.best) rkSaveCode(r.month, r.code, S.score);
+        track("rank_submit", {rank:r.rank});
+        const d2 = await rkCall("yhs_top", { p_device:rkDevice() });
+        rkRender(d2, r);
+        const msg = r.best ? (r.rank<=3 ? "🎉 지금 "+r.rank+"등이에요! 수령 코드를 캡처해 두세요" : "이번 달 내 최고 기록! 지금 "+r.rank+"등") : "등록 완료 · 이번 달 내 최고 기록은 "+fmt(r.myBest)+"점이에요";
+        const m = document.createElement("div"); m.className="rkmsg"; m.style.textAlign="center"; m.textContent=msg; $("#rkBody").prepend(m);
+      }catch(e){ go.disabled=false; $("#rkMsg").className="rkmsg err"; $("#rkMsg").textContent = "연결이 안 돼요. 잠시 후 다시 눌러 주세요"; }
+    };
+    go.onclick = submit;
+    inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); submit(); } });
+  }
+  const rn = $("#rkRename");
+  if(rn) rn.onclick = ()=>{ store.set("nick",""); S.rkDone=false; rkRender(d, null); const i=$("#rkNick"); if(i){ i.value=""; i.focus(); } };
+}
+async function rankLoad(){
+  if(!RK_ON || !$("#rk")) return;
+  const g = S;
+  try{
+    const nick = store.get("nick");
+    // 닉네임을 이미 등록한 손님은 자동으로 기록 등록
+    if(nick && /^[가-힣a-zA-Z0-9]{2,8}$/.test(nick) && S.served > 0 && S.score > 0){
+      const r = await rkCall("yhs_submit", { p_nick:nick, p_score:S.score, p_served:S.served, p_left:S.left, p_log:S.log, p_device:rkDevice() });
+      if(g !== S) return;
+      if(r && r.ok){
+        S.rkDone = true; if(r.best) rkSaveCode(r.month, r.code, S.score); track("rank_submit", {rank:r.rank});
+        const d = await rkCall("yhs_top", { p_device:rkDevice() }); if(g !== S) return;
+        rkRender(d, r);
+        const m = document.createElement("div"); m.className="rkmsg"; m.style.textAlign="center";
+        m.textContent = "‘"+nick+"’ 이름으로 자동 등록했어요" + (r.best ? " · 이번 달 내 최고 기록!" : ""); $("#rkBody").prepend(m);
+        return;
+      }
+      var autoErr = (r && RK_ERR[r.error]) || "등록하지 못했어요. 아래 버튼을 다시 눌러 주세요";
+    }
+    const d = await rkCall("yhs_top", { p_device:rkDevice() }); if(g !== S) return;
+    rkRender(d, null, typeof autoErr === "string" ? autoErr : "");
+  }catch(e){
+    if(g !== S) return;
+    const b = $("#rkBody"); if(b) b.innerHTML = '<div class="rkmsg">랭킹을 불러오지 못했어요 <button class="rkrename" id="rkRetry">다시 시도</button></div>';
+    const rt = $("#rkRetry"); if(rt) rt.onclick = rankLoad;
+  }
+}
 function endGame(){
   S.phase="end"; updateServe(); pointAt(null);
   const best = Math.max(S.score, +(store.get("best")||0)); store.set("best", best);
@@ -967,6 +1127,7 @@ function endGame(){
     '<div class="sc">'+fmt(S.score)+'<span style="font-size:18px">점</span></div>'+
     '<div class="stats"><span>응대 '+S.served+'명</span><span>숙련 '+S.mastered.size+'개</span><span>놓침 '+S.left+'명</span></div>'+
     '<div class="best">내 최고 '+fmt(best)+'점</div></div>'+
+    rankCardHTML()+
     '<div class="acts">'+primary+'</div>'+(SRC!=="qr" && RE.on ? eventCard(false) : '')+
     '<div class="howcard"><div class="howhead">연희시오가 추천하는 먹는 법</div>'+
     [id].concat(MENU_IDS.filter(x=>x!==id)).map((mid,i)=>{ const mm=MENU[mid];
@@ -988,6 +1149,7 @@ function endGame(){
   $("#mkcard").onclick = ()=>makeCard(id, rank);
   setTimeout(()=>{ banner("영업 종료!"); }, 0);
   setTimeout(()=>{ $("#result").classList.add("show"); $("#result").scrollTop=0; }, 900);
+  rankLoad();
 }
 function shareUrl(){ const base = (CONFIG.gameUrl||"").trim(); return base ? base + "#share" : location.origin + location.pathname + "?src=share"; }
 async function shareIt(){
